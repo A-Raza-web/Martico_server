@@ -41,14 +41,29 @@ app.use("/api/payment/webhook", webhookRoutes);
 const PORT = process.env.PORT;
 
 // ✅ MongoDB connect;
+let isConnected = false;
 
-mongoose.connect(process.env.MONGO_URI, {})
-  .then(() => console.log("✅ MongoDB Connected"))
-  .catch(err => console.error("❌ MongoDB Connection Error:", err));
+async function connectWithRetry(){
+  await mongoose.connect(process.env.MONGO_URI, {})
+    .then(() => {
+      console.log("✅ MongoDB Connected");
+      isConnected = true;
+    })
+    .catch(err => console.error("❌ MongoDB Connection Error:", err));
+}
+// add mongoose connection retry logic
 
+app.use((req,res,next)=>{
+  if(!isConnected){
+    connectWithRetry()
+  }
+  next();
+})
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server listening on port ${PORT}!`);
-  console.log(`📊 Cloudinary configured for: ${process.env.CLOUD_NAME}`);
-  console.log(`⚡ p-limit concurrency control ready`);
-});
+// app.listen(PORT, () => {
+//   console.log(`🚀 Server listening on port ${PORT}!`);
+//   console.log(`📊 Cloudinary configured for: ${process.env.CLOUD_NAME}`);
+//   console.log(`⚡ p-limit concurrency control ready`);
+// });
+
+module.exports = app;
