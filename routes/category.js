@@ -34,66 +34,25 @@ router.get('/:id', async (req, res) => {
 // POST /api/categories/create
 router.post('/create', async (req, res) => {
   try {
-    // ===============================
-    // 1️⃣ Check if req.body exists
-    // ===============================
-    if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Request body empty. JSON req !"
-      });
-    }
-
-    // ===============================
-    // 2️⃣ Extract fields from body
-    // ===============================
     const { name, color, image } = req.body;
 
-    if (!name) {
-      return res.status(400).json({ success: false, message: "Name missing hai" });
-    }
+    if (!image || !name) return res.status(400).json({ message: "Missing fields" });
 
-    if (!image) {
-      return res.status(400).json({ success: false, message: "Image field missing hai" });
-    }
-
-    // ===============================
-    // 3️⃣ Make sure image is array
-    // ===============================
     const images = Array.isArray(image) ? image : [image];
 
-    // ===============================
-    // 4️⃣ Upload images to Cloudinary with concurrency control
-    // ===============================
-    const limit = pLimit(2); // 2 uploads at a time
+    // Dynamic import of p-limit
+    const pLimit = (await import('p-limit')).default;
+    const limit = pLimit(2);
 
     const uploadPromises = images.map((img, index) =>
       limit(async () => {
-        if (!img || typeof img !== 'string') {
-          throw new Error("Invalid image format");
-        }
-
-        // Base64
-        if (img.startsWith('data:image/')) {
-          const result = await CloudinaryUtils.uploadImage(img, `category_${Date.now()}_${index}`);
-          return result.url;
-        }
-
-        // External URL
-        if (img.startsWith('http://') || img.startsWith('https://')) {
-          const result = await CloudinaryUtils.uploadImage(img, `category_${Date.now()}_${index}`);
-          return result.url;
-        }
-
-        throw new Error('Invalid image format. Use base64 string or valid URL.');
+        const result = await CloudinaryUtils.uploadImage(img, `category_${Date.now()}_${index}`);
+        return result.url;
       })
     );
 
     const imgUrls = await Promise.all(uploadPromises);
 
-    // ===============================
-    // 5️⃣ Save category in MongoDB
-    // ===============================
     const newCategory = new Category({
       name,
       color: color || '#ffffff',
@@ -102,17 +61,10 @@ router.post('/create', async (req, res) => {
 
     const savedCategory = await newCategory.save();
 
-    // ===============================
-    // 6️⃣ Success response
-    // ===============================
-    res.status(201).json({
-      success: true,
-      data: savedCategory,
-      message: "Category created successfully"
-    });
+    res.status(201).json({ success: true, data: savedCategory });
 
   } catch (error) {
-    console.error("ERROR:", error);
+    console.error(error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
