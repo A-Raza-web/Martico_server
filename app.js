@@ -1,16 +1,11 @@
 const express = require('express');
-const app = express();
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config();
 
 // ================================
-// Webhook (IMPORTANT - before json)
+// Initialize app
 // ================================
-app.use('/api/payment/webhook',
-  express.raw({ type: 'application/json' }),
-  require('./routes/webhookRoutes')
-);
+const app = express();
 
 // ================================
 // Middlewares
@@ -18,6 +13,14 @@ app.use('/api/payment/webhook',
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// ================================
+// Webhook (Serverless-safe)
+// ================================
+app.use('/api/payment/webhook',
+  express.raw({ type: 'application/json' }),
+  require('./routes/webhookRoutes')
+);
 
 // ================================
 // MongoDB Connection (Serverless Safe)
@@ -31,26 +34,22 @@ if (!cached) {
 async function connectDB() {
   if (cached.conn) return cached.conn;
 
-  if (!process.env.MONGO_URI) {
-    throw new Error("❌ MONGO_URI missing in ENV");
-  }
+  if (!process.env.MONGO_URI) throw new Error("❌ MONGO_URI missing in ENV");
 
   try {
     const conn = await mongoose.connect(process.env.MONGO_URI, {
       bufferCommands: false,
     });
-
     cached.conn = conn;
     console.log("✅ MongoDB Connected");
     return conn;
-
   } catch (error) {
     console.error("❌ MongoDB Error:", error);
     throw error;
   }
 }
 
-// ہر request سے پہلے DB connect
+// Connect DB on each request
 app.use(async (req, res, next) => {
   try {
     await connectDB();
@@ -63,29 +62,17 @@ app.use(async (req, res, next) => {
 // ================================
 // Routes
 // ================================
-const homeBannerRoutes = require('./routes/homeBanner');
-const searchRoute = require('./routes/searchRoute');
-const categoryRoutes = require('./routes/category');
-const productRoutes = require('./routes/product');
-const subCategoryRoutes = require('./routes/subCat');
-const authRouter = require("./routes/authRoutes");
-const cartRoutes = require('./routes/cartRoutes');
-const myListRoutes = require("./routes/myListRoutes");
-const reviewRoutes = require("./routes/reviewRoutes");
-const paymentRoutes = require("./routes/payment");
-const orderRoutes = require('./routes/order');
-
-app.use('/api/banners', homeBannerRoutes);
-app.use('/api/search', searchRoute);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/subcategories', subCategoryRoutes);
-app.use("/api/auth", authRouter);
-app.use("/api/cart", cartRoutes);
-app.use("/api/mylist", myListRoutes);
-app.use("/api/reviews", reviewRoutes);
-app.use("/api/payment", paymentRoutes);
-app.use("/api/orders", orderRoutes);
+app.use('/api/banners', require('./routes/homeBanner'));
+app.use('/api/search', require('./routes/searchRoute'));
+app.use('/api/categories', require('./routes/category'));
+app.use('/api/products', require('./routes/product'));
+app.use('/api/subcategories', require('./routes/subCat'));
+app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/cart", require('./routes/cartRoutes'));
+app.use("/api/mylist", require("./routes/myListRoutes"));
+app.use("/api/reviews", require("./routes/reviewRoutes"));
+app.use("/api/payment", require('./routes/payment'));
+app.use("/api/orders", require('./routes/order'));
 
 // ================================
 // Default Route
@@ -95,6 +82,6 @@ app.get("/", (req, res) => {
 });
 
 // ================================
-// Export
+// Export app (Serverless Ready)
 // ================================
 module.exports = app;
