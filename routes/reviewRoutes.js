@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Review = require("../models/Review");
-const Product = require("../models/product");
+const Product = require("../models/Product");
 
 // 1. GET reviews for a product
 router.get("/:productId", async (req, res) => {
