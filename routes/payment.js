@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Stripe = require("stripe");
-const Product = require("../models/Product"); 
+const Product = require("../models/product"); 
 const Cart = require("../models/cartModel");
 
 const stripe = new Stripe(process.env.YOUR_SECRET_KEY);
