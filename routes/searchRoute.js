@@ -2,7 +2,7 @@ const express  = require("express");
 const router   = express.Router();
 const Product  = require("../models/Product");
 const Category = require("../models/category");
-
+// get route for search 
 router.get("/", async (req, res) => {
   try {
     const query = req.query.q;
