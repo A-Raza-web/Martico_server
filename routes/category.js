@@ -40,7 +40,7 @@ router.post('/create', async (req, res) => {
     if (!req.body || Object.keys(req.body).length === 0) {
       return res.status(400).json({
         success: false,
-        message: "Request body empty. JSON req!"
+        message: "Request body empty. JSON req !"
       });
     }
 
@@ -49,8 +49,13 @@ router.post('/create', async (req, res) => {
     // ===============================
     const { name, color, image } = req.body;
 
-    if (!name) return res.status(400).json({ success: false, message: "Name missing hai" });
-    if (!image) return res.status(400).json({ success: false, message: "Image field missing hai" });
+    if (!name) {
+      return res.status(400).json({ success: false, message: "Name missing hai" });
+    }
+
+    if (!image) {
+      return res.status(400).json({ success: false, message: "Image field missing hai" });
+    }
 
     // ===============================
     // 3️⃣ Make sure image is array
@@ -64,10 +69,18 @@ router.post('/create', async (req, res) => {
 
     const uploadPromises = images.map((img, index) =>
       limit(async () => {
-        if (!img || typeof img !== 'string') throw new Error("Invalid image format");
+        if (!img || typeof img !== 'string') {
+          throw new Error("Invalid image format");
+        }
 
-        // Base64 or URL
-        if (img.startsWith('data:image/') || img.startsWith('http://') || img.startsWith('https://')) {
+        // Base64
+        if (img.startsWith('data:image/')) {
+          const result = await CloudinaryUtils.uploadImage(img, `category_${Date.now()}_${index}`);
+          return result.url;
+        }
+
+        // External URL
+        if (img.startsWith('http://') || img.startsWith('https://')) {
           const result = await CloudinaryUtils.uploadImage(img, `category_${Date.now()}_${index}`);
           return result.url;
         }
