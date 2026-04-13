@@ -4,9 +4,15 @@ const orderSchema = new mongoose.Schema({
   userId: {
     type: String,
     required: true,
+    index: true,
   },
 
-  // Contact Info
+  orderNumber: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+
   contact: {
     email: {
       type: String,
@@ -18,7 +24,6 @@ const orderSchema = new mongoose.Schema({
     },
   },
 
-  // Shipping Address
   shippingAddress: {
     fullName: {
       type: String,
@@ -50,21 +55,18 @@ const orderSchema = new mongoose.Schema({
     },
   },
 
-  // Delivery Type
   deliveryMethod: {
     type: String,
     enum: ["standard", "express"],
     default: "standard",
   },
 
-  // Payment Method
   paymentMethod: {
     type: String,
     enum: ["card", "cod"],
     required: true,
   },
 
-  // Cart Items
   items: [
     {
       productId: String,
@@ -75,25 +77,63 @@ const orderSchema = new mongoose.Schema({
     },
   ],
 
-  // Pricing
-  subtotal: Number,
-  deliveryFee: Number,
-  totalAmount: Number,
+  currency: {
+    type: String,
+    default: "USD",
+  },
 
-  // Notes
+  subtotal: {
+    type: Number,
+    required: true,
+  },
+
+  deliveryFee: {
+    type: Number,
+    default: 0,
+  },
+
+  totalAmount: {
+    type: Number,
+    required: true,
+  },
+
   orderNotes: String,
 
-  // Order Status
-  status: {
+  paymentStatus: {
     type: String,
-    enum: ["pending", "confirmed", "shipped", "delivered"],
+    enum: ["unpaid", "paid", "refunded"],
+    default: "unpaid",
+  },
+
+  fulfillmentStatus: {
+    type: String,
+    enum: ["pending", "confirmed", "shipped", "delivered", "cancelled"],
     default: "pending",
   },
+
+  trackingNumber: String,
+
+  adminNotes: String,
 
   createdAt: {
     type: Date,
     default: Date.now,
+    index: true,
+  },
+
+  updatedAt: {
+    type: Date,
+    default: Date.now,
   },
 });
+
+orderSchema.pre("save", function (next) {
+  this.updatedAt = new Date();
+  next();
+});
+
+orderSchema.index({ userId: 1, createdAt: -1 });
+orderSchema.index({ fulfillmentStatus: 1 });
+orderSchema.index({ paymentStatus: 1 });
 
 module.exports = mongoose.model("Order", orderSchema);
