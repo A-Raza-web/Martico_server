@@ -23,10 +23,7 @@ router.post("/checkout", async (req, res) => {
 
     for (const item of items) {
       const productData = await Product.findById(item.productId);
-      
-      if (!productData) {
-        throw new Error(`Product not found: ${item.productId}`);
-      }
+      if (!productData) throw new Error(`Product not found: ${item.productId}`);
 
       subtotal += productData.price * item.quantity;
       validatedItems.push({
@@ -41,7 +38,7 @@ router.post("/checkout", async (req, res) => {
     const deliveryFee = deliveryMethod === "express" ? 15 : 5;
     const totalAmount = subtotal + deliveryFee;
 
-    const orderData = {
+    const newOrder = new Order({
       userId,
       orderNumber: generateOrderNumber(),
       contact,
@@ -52,7 +49,10 @@ router.post("/checkout", async (req, res) => {
       deliveryFee,
       totalAmount,
       orderNotes,
-    };
+      paymentStatus: "pending", 
+    });
+
+    const savedOrder = await newOrder.save();
 
     const line_items = validatedItems.map((item) => ({
       price_data: {
@@ -73,7 +73,8 @@ router.post("/checkout", async (req, res) => {
       success_url: "https://martico-client.vercel.app/success?session_id={CHECKOUT_SESSION_ID}",
       cancel_url: "https://martico-client.vercel.app/cancel",
       metadata: {
-        orderData: JSON.stringify(orderData),
+        orderId: savedOrder._id.toString(),
+        userId: userId
       },
     });
 
@@ -86,40 +87,31 @@ router.post("/checkout", async (req, res) => {
 });
 
 router.post("/confirm", async (req, res) => {
-    const { sessionId, userId } = req.body;
+    const { sessionId } = req.body;
 
     try {
         const session = await stripe.checkout.sessions.retrieve(sessionId);
 
         if (session.payment_status === "paid") {
-            // Find the order that was just paid using metadata
-            const orderData = JSON.parse(session.metadata.orderData);
-            
-            // Ensure order has required fields for the database
-            const orderToSave = {
-              userId: orderData.userId,
-              orderNumber: orderData.orderNumber || `ORD-${Date.now()}`,
-              contact: orderData.contact,
-              shippingAddress: orderData.shippingAddress,
-              deliveryMethod: orderData.deliveryMethod || "standard",
-              paymentMethod: "card",
-              items: orderData.items || [],
-              subtotal: orderData.subtotal || 0,
-              deliveryFee: orderData.deliveryFee || 0,
-              totalAmount: orderData.totalAmount || session.amount_total / 100,
-              orderNotes: orderData.orderNotes,
-              paymentStatus: "paid",
-              fulfillmentStatus: "confirmed",
-            };
+            const orderId = session.metadata.orderId;
+            const userId = session.metadata.userId;
 
-            const newOrder = new Order(orderToSave);
-            await newOrder.save();
-            console.log("✅ Paid order saved to DB:", newOrder._id);
+            const updatedOrder = await Order.findByIdAndUpdate(orderId, {
+                paymentStatus: "paid",
+                fulfillmentStatus: "confirmed"
+            }, { new: true });
+
+            console.log("✅ Order updated to Paid:", orderId);
 
             await Cart.deleteMany({ userId: userId });
-            res.status(200).json({ success: true, message: "Order saved and cart cleared", orderId: newOrder._id });
+            
+            res.status(200).json({ 
+                success: true, 
+                message: "Order updated and cart cleared", 
+                orderId: updatedOrder._id 
+            });
         } else {
-            res.status(200).json({ success: true, message: "Payment not completed" });
+            res.status(400).json({ success: false, message: "Payment not completed" });
         }
     } catch (error) {
         console.error("Confirm error:", error);
