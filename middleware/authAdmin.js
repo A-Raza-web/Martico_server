@@ -21,6 +21,12 @@ const authAdmin = async (req, res, next) => {
         return res.status(403).json({ message: "Admin access required" });
       }
 
+      // Also check for adminToken as fallback for session-based auth
+      if (req.headers['x-admin-token'] === process.env.ADMIN_TOKEN) {
+        req.user = user;
+        return next();
+      }
+
       req.user = user;
       next();
     } catch (error) {
