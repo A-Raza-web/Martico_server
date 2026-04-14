@@ -23,13 +23,15 @@ router.post("/checkout", async (req, res) => {
 
     for (const item of items) {
       const productData = await Product.findById(item.productId);
-      if (!productData) throw new Error(`Product not found: ${item.productId}`);
+      
+      const mainImage = productData.images && productData.images.length > 0 
+        ? productData.images[0].url 
+        : "https://via.placeholder.com/150";
 
-      subtotal += productData.price * item.quantity;
       validatedItems.push({
         productId: item.productId,
         name: productData.name,
-        image: productData.image,
+        image: mainImage, 
         price: productData.price,
         quantity: item.quantity,
       });
