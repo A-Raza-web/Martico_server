@@ -49,8 +49,9 @@ router.post("/checkout", async (req, res) => {
       deliveryFee,
       totalAmount,
       orderNotes,
-      paymentStatus: "pending", 
-    });
+      paymentMethod: "card", 
+      paymentStatus: "unpaid", 
+     });
 
     const savedOrder = await newOrder.save();
 

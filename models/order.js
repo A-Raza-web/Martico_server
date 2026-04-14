@@ -100,10 +100,10 @@ const orderSchema = new mongoose.Schema({
   orderNotes: String,
 
   paymentStatus: {
-    type: String,
-    enum: ["unpaid", "paid", "refunded"],
-    default: "unpaid",
-  },
+  type: String,
+  enum: ["unpaid", "paid", "refunded", "pending"], 
+  default: "unpaid",
+},
 
   fulfillmentStatus: {
     type: String,
