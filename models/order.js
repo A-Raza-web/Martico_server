@@ -127,9 +127,8 @@ const orderSchema = new mongoose.Schema({
   },
 });
 
-orderSchema.pre("save", function (next) {
+orderSchema.pre("save", function () {
   this.updatedAt = new Date();
-  next();
 });
 
 orderSchema.index({ userId: 1, createdAt: -1 });
