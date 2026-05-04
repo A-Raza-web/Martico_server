@@ -27,6 +27,8 @@ app.use(cors({
     credentials: true,
     optionsSuccessStatus: 200 
 }));
+app.options('*', cors());
+
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -76,7 +78,6 @@ app.use(async (req, res, next) => {
   }
 });
 
-app.options('.*', cors()); 
 // ================================
 // Routes
 // ================================
