@@ -76,7 +76,7 @@ app.use(async (req, res, next) => {
   }
 });
 
-app.options('*', cors()); 
+app.options('*.', cors()); 
 // ================================
 // Routes
 // ================================
