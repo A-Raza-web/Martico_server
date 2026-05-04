@@ -7,10 +7,27 @@ const cors = require('cors');
 // ================================
 const app = express();
 
+const allowedOrigins = [
+  'https://martico-admin-git-main-a-raza-webs-projects.vercel.app',
+  'http://localhost:5173', 
+  'https://martico-client.vercel.app' 
+];
+
 // ================================
 // Middlewares
 // ================================
-app.use(cors());
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
