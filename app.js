@@ -73,7 +73,7 @@ app.use("/api/mylist", require("./routes/myListRoutes"));
 app.use("/api/reviews", require("./routes/reviewRoutes"));
 app.use("/api/payment", require('./routes/payment'));
 app.use("/api/orders", require('./routes/order'));
-
+app.use("/api", require('./routes/order'));
 // ================================
 // Default Route
 // ================================
