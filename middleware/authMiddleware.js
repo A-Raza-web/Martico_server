@@ -15,22 +15,24 @@ const protect = async (req, res, next) => {
         return res.status(401).json({ message: "User not found" });
       }
 
-      next();
     } catch (error) {
-      res.status(401).json({ message: "Not authorized, token failed" });
+      return res.status(401).json({ message: "Not authorized, token failed" });
     }
   }
 
   if (!token) {
-    res.status(401).json({ message: "No token, authorization denied" });
+    return res.status(401).json({ message: "No token, authorization denied" });
   }
 };
 
 const admin = (req, res, next) => {
-  if (req.user && req.user.role === "admin") {
+  if (req.user && req.user.role && req.user.role.toLowerCase() === "admin") {
     next(); 
   } else {
-    res.status(403).json({ message: "Access denied. Admins only!" });
+    res.status(403).json({ 
+      success: false, 
+      message: "Access denied. Admins only!" 
+    });
   }
 };
 
