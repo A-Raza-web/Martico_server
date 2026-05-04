@@ -16,8 +16,9 @@ const allowedOrigins = [
 // ================================
 // Middlewares
 // ================================
-// Pre-flight requests (OPTIONS) handled before other middlewares
-app.use(cors({
+
+// 1. CORS Configuration
+const corsOptions = {
     origin: function (origin, callback) {
         if (!origin) return callback(null, true);
         if (allowedOrigins.indexOf(origin) === -1) {
@@ -27,10 +28,17 @@ app.use(cors({
     },
     credentials: true,
     optionsSuccessStatus: 200 
-}));
+};
 
-// Manually handling OPTIONS to avoid 'path-to-regexp' errors
-app.options('/*', cors()); 
+app.use(cors(corsOptions));
+
+// 2. Global OPTIONS Handler (No path string to avoid Regex errors)
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -100,11 +108,6 @@ app.use("/api/orders", require('./routes/order'));
 // ================================
 app.get("/", (req, res) => {
   res.send("🚀 API is running...");
-});
-
-// Handling 404 with safe regex
-app.use('(.*)', (req, res) => {
-    res.status(404).json({ message: "Route not found" });
 });
 
 // ================================
