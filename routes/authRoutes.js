@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { signup, signin} = require("../controllers/authController");
 const authMiddleware = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 const { upload, CloudinaryUtils } = require("../utils/cloudinary");
 const User = require("../models/User");
 
@@ -13,7 +14,7 @@ router.post("/signup", signup);
 // Update profile details
 // --------------------
 
-router.put("/update-profile/:userId", async (req, res) => {
+router.put("/update-profile/:userId", protect,  async (req, res) => {
   try {
     const userId = req.params.userId;
     const { name, email, phone, city, country, address, profileImage } = req.body;
