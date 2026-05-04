@@ -3,6 +3,7 @@ const router = express.Router();
 const Product = require('../models/product');
 const Category = require('../models/category');
 const SubCategory = require('../models/subCat');
+const { protect, admin } = require("../middleware/authMiddleware");
 const { upload,CloudinaryUtils } = require('../utils/cloudinary');
 const { rateLimiter } = require('../utils/rateLimiter');
 
@@ -99,7 +100,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create Product
-router.post('/create', async (req, res) => {
+router.post('/create', protect, admin, async (req, res) => {
   try {
     const {
       name,
@@ -282,7 +283,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /:id -> delete a product
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', protect, admin, async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
