@@ -8,7 +8,7 @@ const cors = require('cors');
 const app = express();
 
 const allowedOrigins = [
-  'https://martico-admin-git-main-a-raza-webs-projects.vercel.app',
+  'https://martico-admin.vercel.app',
   'http://localhost:5173', 
   'https://martico-client.vercel.app' 
 ];
