@@ -16,6 +16,7 @@ const allowedOrigins = [
 // ================================
 // Middlewares
 // ================================
+// Pre-flight requests (OPTIONS) handled before other middlewares
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin) return callback(null, true);
@@ -28,7 +29,8 @@ app.use(cors({
     optionsSuccessStatus: 200 
 }));
 
-
+// Manually handling OPTIONS to avoid 'path-to-regexp' errors
+app.options('/*', cors()); 
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -92,12 +94,17 @@ app.use("/api/mylist", require("./routes/myListRoutes"));
 app.use("/api/reviews", require("./routes/reviewRoutes"));
 app.use("/api/payment", require('./routes/payment'));
 app.use("/api/orders", require('./routes/order'));
-app.use("/api", require('./routes/order'));
+
 // ================================
 // Default Route
 // ================================
 app.get("/", (req, res) => {
   res.send("🚀 API is running...");
+});
+
+// Handling 404 with safe regex
+app.use('(.*)', (req, res) => {
+    res.status(404).json({ message: "Route not found" });
 });
 
 // ================================
