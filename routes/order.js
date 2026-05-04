@@ -2,8 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Order = require("../models/order");
 const Product = require("../models/product");
-const protect = require("../middleware/authMiddleware");
-const {adminOnly } = require("../middleware/authMiddleware");
+const { protect, admin: adminOnly } = require("../middleware/authMiddleware");
 
 function generateOrderNumber() {
   const date = new Date();
