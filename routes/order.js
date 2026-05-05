@@ -88,13 +88,25 @@ router.get("/", protect, async (req, res) => {
 // Get Single Order
 router.get("/:id", protect, async (req, res) => {
   try {
-    const userId = req.user._id.toString();
     const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
-    if (order.userId !== userId) return res.status(403).json({ success: false, message: "Access denied" });
 
-    res.json({ success: true, data: order });
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
+    const isOwner = order.userId.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === 'admin';
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
+    res.json({
+      success: true,
+      data: order,
+    });
   } catch (error) {
+    console.error("Get order error:", error);
     res.status(500).json({ success: false, message: "Error fetching order" });
   }
 });
