@@ -231,7 +231,7 @@ router.post('/create', protect, admin, async (req, res) => {
 });
 
 // PUT /:id -> update a product
-router.put('/:id', async (req, res) => {
+router.put('/:id', protect, admin, async (req, res) => {
   try {
     const { images, ...otherFields } = req.body;
 
