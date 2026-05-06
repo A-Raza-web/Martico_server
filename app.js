@@ -32,7 +32,7 @@ app.use(cors({
 }));
 
 // 2. Global OPTIONS Handler
-app.options('*', cors());
+app.options('(.*)', cors());
 
 app.use('/api/payment/webhook',
   express.raw({ type: 'application/json' }),
