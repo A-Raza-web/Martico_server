@@ -1,11 +1,8 @@
-require('dotenv').config();
+require('dotenv').config(); 
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
-// ================================
-// Initialize app
-// ================================
 const app = express();
 
 const allowedOrigins = [
@@ -18,12 +15,13 @@ const allowedOrigins = [
 // Middlewares
 // ================================
 
+// 1. CORS Configuration
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('CORS Policy Error: Origin not allowed'), false);
+      callback(new Error('CORS Policy Error'), false);
     }
   },
   credentials: true,
@@ -31,20 +29,27 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
 
-// 2. Global OPTIONS Handler
-app.options('(.*)', cors());
+// 2. Global OPTIONS Handler 
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ================================
+// Webhook (Must be before JSON parser)
+// ================================
 app.use('/api/payment/webhook',
   express.raw({ type: 'application/json' }),
   require('./routes/webhookRoutes')
 );
 
-// 4. Body Parsers
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
 // ================================
-// MongoDB Connection (Vercel/Serverless Optimized)
+// MongoDB Connection (Serverless Safe)
 // ================================
 let cached = global.mongoose;
 if (!cached) {
@@ -53,21 +58,17 @@ if (!cached) {
 
 async function connectDB() {
   if (cached.conn) return cached.conn;
-
-  if (!process.env.MONGO_URI) {
-    console.error("❌ MONGO_URI missing in Environment Variables");
-    throw new Error("MONGO_URI is not defined");
-  }
+  if (!process.env.MONGO_URI) throw new Error("❌ MONGO_URI missing in ENV");
 
   try {
     const conn = await mongoose.connect(process.env.MONGO_URI, {
       bufferCommands: false,
     });
     cached.conn = conn;
-    console.log("✅ MongoDB Connected Successfully");
+    console.log("✅ MongoDB Connected");
     return conn;
   } catch (error) {
-    console.error("❌ MongoDB Connection Error:", error.message);
+    console.error("❌ MongoDB Error:", error);
     throw error;
   }
 }
@@ -77,11 +78,7 @@ app.use(async (req, res, next) => {
     await connectDB();
     next();
   } catch (err) {
-    res.status(500).json({ 
-      success: false, 
-      message: "Database connection failed",
-      error: err.message 
-    });
+    res.status(500).json({ message: "Database connection failed" });
   }
 });
 
@@ -100,12 +97,8 @@ app.use("/api/reviews", require("./routes/reviewRoutes"));
 app.use("/api/payment", require('./routes/payment'));
 app.use("/api/orders", require('./routes/order'));
 
-// Default Route
 app.get("/", (req, res) => {
-  res.send("🚀 Martico API is running smoothly...");
+  res.send("🚀 Martico API is running...");
 });
 
-// ================================
-// Export app
-// ================================
 module.exports = app;
