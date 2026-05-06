@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { signup, signin } = require("../controllers/authController");
-const { protect, admin: adminOnly } = require("../middleware/authMiddleware"); ا
+const { protect, admin: adminOnly } = require("../middleware/authMiddleware"); 
 const User = require("../models/User");
 
 // Public Routes
